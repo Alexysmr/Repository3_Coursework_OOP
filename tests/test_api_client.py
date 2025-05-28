@@ -1,8 +1,5 @@
-from os.path import exists
-
 import requests
-import pytest
-from unittest.mock import Mock, patch
+
 from src.api_client import HHAPIClient
 
 
@@ -22,6 +19,7 @@ def test_hh_api_client(mocker, temp_dir):
     requests.get.assert_called()
     assert len(result) == 3
     assert result[0]["id"] == "1"
+
 
 def test_hh_api_client_all_pages_empty(mocker, temp_dir):
     mock_response_empty = mocker.Mock()

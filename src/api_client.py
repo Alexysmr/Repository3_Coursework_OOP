@@ -1,12 +1,12 @@
 import json
 import os
 import time
+import requests
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
-import requests
-
-from src.config import HH_API_URL, HH_API_HEADERS, HH_API_AREA, PAGES, PER_PAGE, DATA_DIR, setup_logging
+from src.config import DATA_DIR, HH_API_AREA, HH_API_HEADERS, HH_API_URL, PAGES, PER_PAGE, setup_logging
 
 modul_name = os.path.basename(__file__)
 logger = setup_logging(modul_name)
@@ -14,7 +14,7 @@ logger = setup_logging(modul_name)
 
 class AbstractAPIClient(ABC):
     @abstractmethod
-    def get_vacancies(self, search_query: str) -> list[dict]:
+    def get_vacancies(self, search_query: str, pages: int = 1) -> List[Dict[str, Any]] | None:
         pass
 
 
@@ -26,8 +26,15 @@ class HHAPIClient(AbstractAPIClient):
     logger.info("Старт api-клиента")
     BASE_URL = HH_API_URL
 
-    def __init__(self, search_query: str, area: int = None, page: int = 0, per_page: int = PER_PAGE,
-                 file_path: Path | None = None, filename: str | None = None):
+    def __init__(
+        self,
+        search_query: str,
+        area: int = 1,
+        page: int = 0,
+        per_page: int = PER_PAGE,
+            file_path: Optional[Path] = None,
+            filename: Optional[str] = None,
+    ):
         self.area = area if area else HH_API_AREA
         self._page = page
         self.per_page = per_page
@@ -37,20 +44,19 @@ class HHAPIClient(AbstractAPIClient):
         logger.info("Инициализатор")
         self.get_vacancies(search_query)
 
-    def get_vacancies(self, search_query: str, pages: int = PAGES) -> list | None:
+    def get_vacancies(self, search_query: str, pages: int = PAGES) -> Optional[List[Dict[str, Any]]]:
         """Получение списка вакансий по ключевому слову-запросу"""
         data_file = self.file_path / self.filename
-        json_data = []
+        json_data: List[Dict[str, Any]] = []
         logger.info(f"Старт запроса {search_query}")
-        base_params = {"text": search_query,
-                       "area": self.area,
-                       "per_page": self.per_page}
+        base_params: Dict[str, Union[str, int]] = {"text": search_query, "area": self.area, "per_page": self.per_page}
         try:
             delay = 0.5 if pages >= 20 else 0.1  # уважаем чужой API
             for i in range(pages):
                 current_params = {**base_params, "page": i}
-                response = requests.get(self.BASE_URL, params=current_params,
-                                        headers=self.headers)  # Передаём заголовки
+                response = requests.get(
+                    self.BASE_URL, params=current_params, headers=self.headers
+                )  # Передаём заголовки
                 response.raise_for_status()
                 items = response.json().get("items", [])
                 if not items:
@@ -63,8 +69,9 @@ class HHAPIClient(AbstractAPIClient):
             logger.info(f"Всего собрано вакансий: {len(json_data)}")
             with open(data_file, "w", encoding="utf-8") as file:
                 json.dump(json_data, file, indent=4, ensure_ascii=False)
-                logger.info(f"Файл данных по запросу \"{search_query}\" создан")
+                logger.info(f'Файл данных по запросу "{search_query}" создан')
                 return json_data
         except requests.exceptions.RequestException as err:
             logger.warning(f"Ошибка запроса: {err}")
             print(f"Ошибка запроса: {err}")
+            return None

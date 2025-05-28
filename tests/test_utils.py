@@ -1,8 +1,9 @@
 import os
 from datetime import datetime, timedelta
 from unittest.mock import patch
-from src.utils import check_exist_data
+
 from src.config import CACHE_EXPIRE_HOURS
+from src.utils import check_exist_data
 
 
 def test_check_exist_data_with_fresh_cache(monkeypatch, temp_dir, mock_json_file):
@@ -13,7 +14,9 @@ def test_check_exist_data_with_fresh_cache(monkeypatch, temp_dir, mock_json_file
 
     # Мокаем HHAPIClient.get_vacancies, чтобы он возвращал тестовые данные
     with patch("src.utils.HHAPIClient") as mock_client:
-        mock_client.return_value.get_vacancies.return_value = [{"id": "1"}]  # pages здесь не передаётся, используется значение по умолчанию
+        mock_client.return_value.get_vacancies.return_value = [
+            {"id": "1"}
+        ]  # pages здесь не передаётся, используется значение по умолчанию
         result = check_exist_data("Python", temp_dir)
     assert len(result) == 1
 

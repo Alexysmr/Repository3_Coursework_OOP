@@ -1,7 +1,8 @@
-import os
-from src.storage import JSONSaver
-from src.analyzer import Vacancy
 import json
+import os
+
+from src.analyzer import Vacancy
+from src.storage import JSONSaver
 
 
 def test_add_vacancy(temp_dir):
@@ -13,9 +14,9 @@ def test_add_vacancy(temp_dir):
     saver.add_vacancy(vacancy)
 
     assert expected_file.exists()
-    with open(expected_file, 'r', encoding='utf-8') as f:
+    with open(expected_file, "r", encoding="utf-8") as f:
         data = json.load(f)
-    assert data[0]['id'] == '1'
+    assert data[0]["id"] == "1"
 
 
 def test_delete_vacancy(temp_dir):
@@ -29,6 +30,6 @@ def test_delete_vacancy(temp_dir):
     saver.add_vacancy(vacancy)  # добавляем в тестовый файл вакансию vacancy
     saver.delete_vacancy(vacancy)  # удаляем из тестового файла вакансию vacancy
 
-    with open(expected_file, 'r', encoding='utf-8') as f:
+    with open(expected_file, "r", encoding="utf-8") as f:
         data = json.load(f)
     assert len(data) == 0
